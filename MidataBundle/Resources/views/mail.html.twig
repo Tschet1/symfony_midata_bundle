@@ -1,0 +1,377 @@
+{% macro recursiveGroupPrint(id,group, rec) %}
+    {% import _self as fun %}
+    { text: '{% if rec != 0 %}{% for i in 1..rec %} . . . {% endfor %}{% endif %} {{ group.name }}',
+    value: "{{ id }}", class: "groupSelectItem item-pad-{{ rec }}",
+    entity_encoding: 'raw'},
+    {% if group.Untergruppen is defined %}
+        {% for key,ugroup in group.Untergruppen %}
+            {{ fun.recursiveGroupPrint(key, ugroup, rec+1) }}
+        {% endfor %}
+    {% endif %}
+{% endmacro %}
+
+{% block content %}
+    {% stylesheets
+    '@AppBundle/Resources/css/*'
+    filter="scssphp" output='css/compiled.css' %}
+    <link rel="stylesheet" href="{{ asset_url }}"/>
+    {% endstylesheets %}
+
+    <style>
+        #sendMailInfo {
+            height: auto;
+            padding: 10 10 10 10;
+            border: none;
+        }
+
+        body {
+            background-image: none;
+            background-color: white;
+        }
+    </style>
+
+
+    <section id="mail">
+
+        <form id="MailForm" method="post" enctype="multipart/form-data">
+		<textarea name="Content">
+			Mail hier.
+</textarea>
+            <input type="text" name="Gruppe" id="GruppeForm" style="visibility: hidden">
+            <input type="text" name="Filter" id="FilterForm" style="visibility: hidden">
+            <input type="text" name="Betreff" id="BetreffForm" style="visibility: hidden">
+            <input type="checkbox" name="Untergruppen" id="unterGruppen" style="visibility: hidden">
+            <label>Anhang hinzufügen:
+                <input name="anhang" type="file">
+            </label>
+        </form>
+
+        <div id="loadingScreen" class="uil-spin-css" style="-webkit-transform:scale(0.6)">
+            <div>
+                <div></div>
+            </div>
+            <div>
+                <div></div>
+            </div>
+            <div>
+                <div></div>
+            </div>
+            <div>
+                <div></div>
+            </div>
+            <div>
+                <div></div>
+            </div>
+            <div>
+                <div></div>
+            </div>
+            <div>
+                <div></div>
+            </div>
+            <div>
+                <div></div>
+            </div>
+        </div>
+
+    </section>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+
+    <script src="https://cdn.tinymce.com/4/tinymce.min.js"></script>
+
+    <script>
+        var gruppe = null;
+        var filter = null;
+        var lock = false;
+        var untergruppen = false;
+
+        var ajaxNum = 0;
+
+        tinymce.PluginManager.add('Vorschau', function (editor, url) {
+
+            editor.addButton('Vorschau', {
+                title: 'Vorschau',
+                text: 'Vorschau',
+                onclick: function () {
+                    // Open window with a specific url
+                    editor.windowManager.open({
+                        title: 'Vorschau',
+                        body: [
+                            {
+                                type: 'button',
+                                text: '1',
+                                onclick: function (e) {
+                                    editor.focus();
+                                    editor.selection.setContent(this.text());
+                                    this.parent().parent().close();
+                                }
+                            }
+                        ],
+                        width: 400,
+                        height: 400,
+                        buttons: [{
+                            text: 'Close',
+                            onclick: 'close'
+                        }]
+                    });
+                }
+            });
+        });
+
+        tinymce.PluginManager.add('Senden', function (editor, url) {
+
+            editor.addButton('Senden', {
+                title: 'Senden',
+                text: 'Senden',
+                onclick: function () {
+                    // Open window with a specific url
+                    editor.windowManager.open({
+                        title: 'Senden',
+                        body: [
+                            {
+                                type: 'button',
+                                text: '1',
+                                onclick: function (e) {
+                                    editor.focus();
+                                    editor.selection.setContent(this.text());
+                                    this.parent().parent().close();
+                                }
+                            }
+                        ],
+                        width: 400,
+                        height: 400,
+                        buttons: [{
+                            text: 'Close',
+                            onclick: 'close'
+                        }]
+                    });
+                }
+            });
+        });
+
+
+        function sendReady() {
+            return ($('#BetreffForm').val() !== "" && gruppe !== null);
+        }
+
+        function vorschauEmpfaenger() {
+
+            lock = true;
+            if ($('#gruppeSelect').val() !== "-") {
+
+                var dat = {
+                    group: gruppe,
+                    fun: filter,
+                    untergruppen: untergruppen
+                };
+
+                var requestNum = ++ajaxNum;
+
+                $.ajax({
+                    type: "POST",
+                    dataType: "json",
+                    url: "{{ path('midata_bundle_mailInfo') }}",
+                    data: JSON.stringify(dat)
+                }).done(function (data) {
+                    if (requestNum === ajaxNum) {
+                        $('#sendMailInfo').val(data.message);
+                    }
+
+
+                }).always(function (err) {
+                    if (requestNum === ajaxNum) {
+                        lock = false;
+                    }
+                });
+            }
+
+
+        }
+
+
+        tinymce.PluginManager.add('Empfänger', function (editor, url) {
+            editor.addCommand('empf', function () {
+                win = editor.windowManager.open({
+                    title: 'Senden',
+                    body: [
+                        {
+                            type: 'form',
+                            id: 'toForm',
+                            name: 'toForm',
+                            items: [
+                                {
+                                    type: 'textbox',
+                                    label: 'Absender',
+                                    id: 'mailTextBox',
+                                    onPostRender: function () {
+                                        $('#mailTextBox').val('{{ user }}' + '@pfadizytturm.ch').prop("disabled", true);
+                                    }
+                                },
+                                {
+                                    type: 'textbox',
+                                    label: 'Betreff',
+                                    onchange: function (e) {
+                                        $('#BetreffForm').val(this.value());
+                                    }
+                                },
+                                {
+                                    type: 'listbox',
+                                    label: 'Gruppe',
+                                    id: 'gruppeSelect',
+                                    values: [
+                                        {% import _self as fun %}
+                                        {text: '-', value: '-'},
+                                        {{ fun.recursiveGroupPrint(id,gruppen,0) }}
+                                    ],
+                                    onPostRender: function (e) {
+                                        $('.mce-menu-item .mce-text').each(function () {
+                                            var replaced = $(this).html().replace(/\./g, '    ');
+                                            console.log(replaced);
+                                            $(this).html(replaced);
+                                        });
+                                    },
+                                    onselect: function (e) {
+                                        $('#GruppeForm').val(this.value());
+                                        gruppe = this.value();
+                                        vorschauEmpfaenger();
+                                    }
+                                },
+                                {
+                                    type: 'checkbox',
+                                    id: "checkboxUntergruppen",
+                                    checked: false,
+                                    text: 'Inklusive aller Untergruppen',
+                                    onchange: function (e) {
+                                        untergruppen = this.value();
+                                        vorschauEmpfaenger();
+                                    }
+                                },
+                                {
+                                    type: 'listbox',
+                                    label: 'Rollen',
+                                    id: 'rolleSelect',
+                                    values: [
+                                        {text: 'Alle', value: 'Alle'},
+                                        {text: 'Teilnehmer', value: 'Teilnehmer'},
+                                        {text: 'Leiter', value: 'Leiter'}
+                                    ],
+                                    onselect: function (e) {
+                                        $('#FilterForm').val(this.value());
+                                        filter = this.value();
+                                        vorschauEmpfaenger();
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            type: 'textbox',
+                            multiline: true,
+                            text: '',
+                            id: 'sendMailInfo',
+                            disabled: true
+                        }
+
+                    ],
+                    buttons: [
+                        {
+                            text: 'senden',
+                            id: 'sendMailButton',
+                            onclick: function (e) {
+                                if (!lock) {
+                                    if (sendReady()) {
+
+                                        $('#unterGruppen').prop('checked', untergruppen);
+                                        var a = $('#MailForm').submit();
+                                    }
+                                    else {
+                                        e.stopPropagation();
+                                        $('#sendMailInfo').val("Betreff oder Empfänger fehlt.");
+                                    }
+                                }
+                                else {
+                                    e.stopPropagation();
+                                }
+                            }
+                        },
+                        {
+                            text: 'Close',
+                            onclick: function (e) {
+                                gruppe = null;
+                                filter = null;
+                                lock = false;
+                                untergruppen = false;
+                                tinyMCE.activeEditor.windowManager.close();
+                            }
+                        }
+                    ]
+                });
+            });
+
+            editor.addButton('Empfänger', {
+                text: 'Senden',
+                cmd: 'empf',
+                id: 'empfaengerButton'
+            });
+
+        });
+
+
+        tinymce.PluginManager.add('Platzhalter', function (editor, url) {
+
+            editor.addButton('Platzhalter', {
+                title: 'Platzhalter einfügen',
+                text: '<<Platzhalter>>',
+                type: 'listbox',
+                onselect: function (e) {
+                    editor.insertContent('(-' + this.value() + '-)');
+                    this.text('(-Platzhalter-)')
+                },
+                values: [
+                    {% for feld in platzhalter %}
+                    {text: '{{ feld }}', value: '{{ feld }}'}{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ]
+            });
+
+        });
+
+
+        tinymce.init({
+            selector: 'textarea',
+            height: 500,
+            theme: 'modern',
+            plugins: [
+                'advlist autolink lists link image charmap print preview hr anchor pagebreak',
+                'searchreplace wordcount visualblocks visualchars fullscreen',
+                'insertdatetime nonbreaking save table contextmenu directionality',
+                'template paste textcolor colorpicker textpattern imagetools', 'Platzhalter', 'Empfänger'
+            ],
+            toolbar1: 'Empfänger Platzhalter',
+            toolbar2: 'insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | forecolor backcolor | bullist numlist outdent indent | link image',
+            image_advtab: true,
+            templates: [
+                {title: 'Test template 1', content: 'Test 1'},
+                {title: 'Test template 2', content: 'Test 2'}
+            ],
+            relative_urls: false,
+            remove_script_host: false,
+            convert_urls: true,
+            content_css: [
+                '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
+                '//www.tinymce.com/css/codepen.min.css'
+            ]
+        });
+
+        $(document).ajaxStart(function () {
+            $('#loadingScreen').show();
+        });
+
+        $(document).ajaxComplete(function () {
+            $('#loadingScreen').hide();
+        });
+
+    </script>
+
+
+
+{% endblock content %}
+

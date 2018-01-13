@@ -1,0 +1,29 @@
+
+services:
+    midata.schnittstelle:
+        class: PfadiZytturm\MidataBundle\Service\pbsSchnittstelle
+        autowire: true
+        autoconfigure: true
+
+    PfadiZytturmMidataBundle\Controller\midataMailController:
+        class: PfadiZytturm\MidataBundle\Controller\midataMailController
+        arguments: ["@service_container", "@midata.schnittstelle", "@security.token_storage"]
+
+#    pfadi_zytturm_midata.example:
+#        class: PfadiZytturm\MidataBundle\Example
+#        arguments: ["@service_id", "plain_value", "%parameter%"]
+
+#services:
+#    pfadi_zytturm_midata.schnittstelle:
+#        class: PfadiZytturm\MidataBundle\src\pbsSchnittstelle
+#        arguments:
+#            $url: "%pfadi_zytturm_midata.midata.url%"
+#            $user: "a"
+#            $password: "a"
+#            $groupId: "a"
+#            $cacheTTL: "a"
+
+
+#    pfadi_zytturm_midata.example:
+#        class: PfadiZytturm\MidataBundle\Example
+#        arguments: ["@service_id", "plain_value", "%parameter%"]

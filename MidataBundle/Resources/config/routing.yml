@@ -1,0 +1,6 @@
+midata_bundle_mail:
+    path: /mail
+    defaults: { _controller: PfadiZytturmMidataBundle\Controller\midataMailController:mailAction }
+midata_bundle_mailInfo:
+    path: /mail/info
+    defaults: { _controller: PfadiZytturmMidataBundle\Controller\midataMailController:mailInfoAction }

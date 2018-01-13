@@ -1,0 +1,20 @@
+{
+    "name": "PfadiZytturm/MidataBundle",
+    "description": "This is a bundle for the symfony framework and contains midata bindings and a personal mailing service",
+    "keywords": ["midata", "pbs", "pfadi", "scout"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jan Müller v/o Tschet",
+            "email": "tschet@pfadizytturm.ch"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "symfony/symfony": ">=3.2.0",
+        "rmccue/requests": "^1.7"
+    },
+    "autoload": {
+        "psr-4": { "PfadiZytturm\\MidataBundle\\": "" }
+    }
+}

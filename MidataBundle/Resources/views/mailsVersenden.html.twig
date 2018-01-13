@@ -1,0 +1,38 @@
+{% extends 'base-intern.html.twig' %}
+
+{% block content %}
+	<div class="container-fluid">
+		<ul>
+			{% if gruppen is defined %}
+				{% for gruppe in gruppen %}
+					<li>
+						Anschlag für {{ gruppe }} gesetzt.
+						<span style='color: green' class='glyphicon glyphicon-ok' aria-hidden='true'></span>
+					</li>
+				{% endfor %}
+			{% endif %}
+			{% if newsletter is defined %}
+				{% for k,v in newsletter %}
+					<li class="newsletterSender">
+						{% if v <= 0 %}
+							<p style="font-weight: bold; color: darkred">{{ k }}: die Mails wurden NICHT verschickt!.</p>
+						{% else %}
+							{{ k }}: {{ v }} Mails gesendet.
+						{% endif %}
+					</li>
+				{% endfor %}
+			{% endif %}
+			{% if mail is defined %}
+				{% if mail %}
+					<li class="newsletterSender">
+						Die Mails werden alle 30 Minuten versendet. (max. 50 Mails pro halbe Stunde)
+					</li>
+				{% endif %}
+			{% endif %}
+		</ul>
+	</div>
+
+
+{% endblock content %}
+
+
