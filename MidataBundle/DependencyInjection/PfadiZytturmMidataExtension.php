@@ -39,6 +39,10 @@ class PfadiZytturmMidataExtension extends Extension
         if (isset($config['mail']['logger'])) {
             $container->setParameter('midata.mail.logger', $config['mail']['logger']);
         }
+        if(isset($config['midata']['role_mapping'])){
+            $container->setParameter('midata.roleMapping', $config['midata']['role_mapping']);
+        }
+
         $container->setParameter('midata.mail.mapping', $config['mail']['key_mapping']);
         $container->setParameter('midata.mail.mailer', $config['mail']['mailer']);
 

@@ -1,7 +1,7 @@
 <?php
 /**
  * Created by PhpStorm.
- * User: Jan
+ * User: Tschet
  * Date: 10.01.18
  * Time: 21:33
  */
@@ -12,8 +12,6 @@ use PfadiZytturm\MidataBundle\PfadiZytturmMidataBundle;
 use Requests;
 use Symfony\Component\Cache\Simple\FilesystemCache;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-
-// TODO: handle dependencies
 
 class pbsSchnittstelle extends PfadiZytturmMidataBundle
 {
@@ -26,6 +24,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
     private $groupId;
     private $cache;
     private $cacheTTL;
+    private $role_mapping;
 
     /**
      * pbsSchnittstelle constructor.
@@ -33,9 +32,6 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
      */
     public function __construct(ContainerInterface $container)
     {
-
-        //TODO: where should the config come from???
-
         // TODO: enable different forms of caches or allow to disable caches
         $this->cache = new FilesystemCache();
         $this->url = $container->getParameter("midata.url");
@@ -43,10 +39,19 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         $this->password = $container->getParameter("midata.password");
         $this->groupId = $container->getParameter("midata.groupId");
         $this->cacheTTL = $container->getParameter("midata.cache.TTL");
+        if ($container->hasParameter('midata.roleMapping')) {
+            $tmpmapping = $container->getParameter('midata.roleMapping');
+            if (count($tmpmapping) > 0) {
+                $this->role_mapping = $tmpmapping;
+            }
+        }
     }
 
     /**
-     * User login to midata
+     * User login to midata. This can be used to get a means of log in for your homepage by connecting to midata or
+     * loading information about your users.
+     * However, you should consider caching the results or have some backup authentification mechanism as the midata
+     * is down from time to time of updates could break the bindings.
      *
      * @param string $mail mail that is used to login to midata
      * @param string $password user's password
@@ -59,7 +64,6 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         /*
          * I: get a session token from midata
          */
-
         //create request
         $headers = array("Accept" => "application/json");
         $data = array("person[email]" => $mail, "person[password]" => $password);
@@ -68,17 +72,16 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
             //send request
             $raw = Requests::post($this->url . "/users/token", $headers, $data, ['timeout' => 50]);
         } catch (\Exception $e) {
-            throw new \Exception('Keine Verbindung zur Midata möglich... Versuche es doch in ein paar Minuten nochmals oder melde dich beim Webmaster \n' . $e->getMessage());
+            throw new \Exception('Keine Verbindung zur Midata möglich... Versuche es doch in ein paar Minuten 
+            nochmals oder melde dich beim Webmaster \n' . $e->getMessage());
         }
 
         // we received an answer, check if the request was successful
         $res = json_decode($raw->body, true);
         if (isset($res['error'])) {
-            // TODO: how should this be handled?
             throw new \Exception('User oder Password falsch.');
         }
         // login successful!
-
         $pfadiname = $res['people'][0]['nickname'];
 
         //get token
@@ -94,7 +97,6 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
 
         /*
          * II: Load information about the user
-         * //TODO: move this out of this class?
          */
         $raw = Requests::get($res["people"][0]["href"], $headers);
         $res = json_decode($raw->body, true);
@@ -104,54 +106,38 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         $isMember = false;
         if (isset($res['linked']['groups'])) {
             foreach ($res['linked']['groups'] as $group) {
-                // TODO: change this to id
-                if ($group['name'] == 'Pfadi Zytturm') {
+                if ($group['id'] == $this->groupId) {
                     $isMember = true;
                     break;
                 }
             }
             if (!$isMember) {
-                throw new \Exception('Anscheinend gehörst du nicht zur Pfadi Zytturm....');
+                throw new \Exception('Anscheinend gehörst du nicht zur Abteilung...');
             }
         } else {
             throw new \Exception('Strukturfehler');
         }
 
-
-        //todo: export to parameters
-        $acceptedRolesLeiter = ['Einheitsleiter', 'Mitleiter', 'Adressverwalter'];
-        $acceptedRolesStufenleiter = ['Stufenleiter Biber', 'Stufenleiter Wölfe', 'Stufenleiter Pfadi', 'Stufenleiter Pio', 'Stufenleiter Rover'];
-        $acceptedRolesAbteilungsleitung = ['Coach', 'Abteilungsleiter', 'Präsident'];
-        $acceptedRolesHeime = [];
-        $acceptedRolesWebmaster = ['Webmaster'];
-
+        // add roles to the user
         $roles = Array();
-        if (isset($res['people'][0]['links']['roles'])) {
-            //iterate over roles
-            foreach ($res['people'][0]['links']['roles'] as $role) {
-                //get role from id
-                foreach ($res['linked']['roles'] as $tmp) {
-                    //role in ids found
-                    if ($tmp['id'] == $role) {
-                        if (in_array($tmp['role_type'], $acceptedRolesLeiter)) {
-                            $r = "ROLE_LEITER";
-                        } elseif (in_array($tmp['role_type'], $acceptedRolesStufenleiter)) {
-                            $r = "ROLE_STUFENLEITER";
-                        } elseif (in_array($tmp['role_type'], $acceptedRolesAbteilungsleitung)) {
-                            $r = "ROLE_ABTEILUNGSLEITUNG";
-                        } elseif (in_array($tmp['role_type'], $acceptedRolesHeime)) {
-                            $r = "ROLE_HEIMVERWALTUNG";
-                        } elseif (in_array($tmp['role_type'], $acceptedRolesWebmaster)) {
-                            $r = "ROLE_WEBMASTER";
-                        } else {
-                            break 1;
-                        }
+        if ($this->role_mapping !== null) {
 
-                        if (!in_array($r, $roles)) {
-                            $roles[] = $r;
+            if (isset($res['people'][0]['links']['roles'])) {
+                //iterate over roles
+                foreach ($res['people'][0]['links']['roles'] as $role) {
+                    //get role from id
+                    foreach ($res['linked']['roles'] as $tmp) {
+                        //role in ids found
+                        if ($tmp['id'] == $role) {
+                            //iterate over mapping
+                            foreach ($this->role_mapping as $role_name => $role_array) {
+                                if (in_array($tmp['role_type'], $role_array)) {
+                                    if (!in_array($role_name, $roles)) {
+                                        $roles[] = $role_name;
+                                    }
+                                }
+                            }
                         }
-
-                        break 1;
                     }
                 }
             }
@@ -284,96 +270,6 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         return $res;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /*
-     * TODO: delete
-     */
-    /*
-    public function getStuLei($stufe)
-    {
-        $stufenname = null;
-
-        switch ($stufe) {
-            case 0:
-                $stufenname = "Stufenleiter Biber";
-                break;
-            case 1:
-                $stufenname = "Stufenleiter Wölfe";
-                break;
-            case 2:
-                $stufenname = "Stufenleiter Pfadi";
-                break;
-            case 3:
-                $stufenname = "Stufenleiter Pio";
-                break;
-            case 4:
-                $stufenname = "Stufenleiter Rover";
-                break;
-
-        }
-
-        $persons = $this->requestGroupMembers(pbsSchnittstelle::$mainGroupID);
-
-        if (!$persons) {
-            return [];
-        }
-
-        $id = [];
-        foreach ($persons['linked']['roles'] as $role) {
-            if ($role['role_type'] == $stufenname) {
-                $id[] = $role['id'];
-            }
-        }
-
-        if (count($id) == 0) {
-            return [];
-        }
-
-        $stulei = [];
-        foreach ($persons['people'] as $person) {
-            if (count(array_intersect($id, $person['links']['roles']))) {
-                $stulei[] = $person['href'];
-
-            }
-        }
-
-
-        $stufenleiter_expanded = [];
-        foreach ($stulei as $stu) {
-            $tmp = $this->doQuery($stu);
-
-            $t['Vorname'] = $tmp['people'][0]['first_name'];
-            $t['Nachname'] = $tmp['people'][0]['last_name'];
-            $t['Pfadiname'] = $tmp['people'][0]['nickname'];
-            $t['Mail'] = $tmp['people'][0]['email'];
-            $t['Info'] = $tmp['people'][0]['additional_information'];
-
-            $stufenleiter_expanded[$t['Pfadiname']] = $t;
-
-        }
-
-        return $stufenleiter_expanded;
-
-
-    }
-    */
-
     /**
      * @param $group integer the group to query
      * @return array list of subgroups
@@ -382,7 +278,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
      */
     public function getChildren($group = null)
     {
-        if($group === null){
+        if ($group === null) {
             $group = $this->groupId;
         }
 

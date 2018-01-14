@@ -59,6 +59,11 @@ class Configuration implements ConfigurationInterface
                         ->arrayNode("cache")->addDefaultsIfNotSet()->children()
                             ->integerNode("ttl")->defaultValue(60 * 60 * 24 * 7)->end()->end()
                         ->end()
+                        ->arrayNode("role_mapping")
+                            ->arrayPrototype()
+                                ->scalarPrototype()->end()
+                            ->end()
+                        ->end()
                     ->end()
                 ->end()
             ->end();
