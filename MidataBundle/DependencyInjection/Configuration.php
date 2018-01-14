@@ -31,6 +31,7 @@ class Configuration implements ConfigurationInterface
                         ->scalarNode("mail_domain")->end()
                         ->scalarNode("logger")->end()
                         ->scalarNode("mailer")->end()
+                        ->scalarNode("done_view")->isRequired()->end()
                         ->arrayNode("key_mapping")->ignoreExtraKeys()->addDefaultsIfNotSet()
                             ->children()
                                 ->scalarNode('first_name')->defaultValue('Vorname')->end()

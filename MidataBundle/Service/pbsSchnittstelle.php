@@ -55,12 +55,12 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
      *
      * @param string $mail mail that is used to login to midata
      * @param string $password user's password
-     * @return array //TODO: define
-     * @throws \Exception //TODO: define
+     * @return array an array with the user configuration:  user: mail used for login, password: the password,
+     *      roles: the users roles, stufe: the stufe the user belongs to, Pfadiname: the nickname of the user
+     * @throws \Exception on error
      */
     public function getUser($mail, $password)
     {
-        //TODO: this function
         /*
          * I: get a session token from midata
          */
@@ -101,7 +101,6 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         $raw = Requests::get($res["people"][0]["href"], $headers);
         $res = json_decode($raw->body, true);
 
-        // TODO: should this be based on the group number?
         // Nicht-Pfadi-Zytturm Mitglieder herausfiltern
         $isMember = false;
         if (isset($res['linked']['groups'])) {

@@ -22,6 +22,7 @@ class midataMailController extends Controller
     private $user;
     private $mapping;
     private $mailer;
+    private $done_view;
 
     public function __construct(ContainerInterface $container, pbsSchnittstelle $midata, TokenStorageInterface $token)
     {
@@ -32,6 +33,7 @@ class midataMailController extends Controller
         }
         $this->mailer = $container->get($container->getParameter("midata.mail.mailer"));
         $this->mapping = $container->getParameter("midata.mail.mapping");
+        $this->done_view = $container->getParameter('midata.mail.view.done');
     }
 
     /**
@@ -42,7 +44,6 @@ class midataMailController extends Controller
      */
     public function mailAction(Request $request)
     {
-        //TODO: add user
         if ($this->logger !== null) {
             $this->logger->log($this->user->getUsername() . " beginnt eine Mail zu schreiben.");
         }
@@ -74,11 +75,7 @@ class midataMailController extends Controller
             $this->loadReceiversAndSendMail($content, $gruppe, $filter, $betreff, $untergruppen, $anhang);
 
             // return the info page
-            // TODO: set the done view as parameter
-            return $this->render('@PfadiZytturmMidata/mailsVersenden.html.twig', array(
-                'mail' => true,
-                'envelope' => true
-            ));
+            return $this->render($this->done_view);
         }
 
         return $this->render('@PfadiZytturmMidata/mail.html.twig', array('gruppen' => $gruppen, 'platzhalter' => $this->mapping, 'user' => $this->getUser()->getPfadiname(), 'id' => $this->container->getParameter("midata.groupId")));
@@ -152,7 +149,7 @@ class midataMailController extends Controller
 
             // send the mail
             $this->mailer->sendMail(
-                $this->renderView( //todo: add possibility to set view
+                $this->renderView(
                     '@PfadiZytturmMidata/mail.txt.twig',
                     array(
                         'content' => strip_tags($modifiedContent),
