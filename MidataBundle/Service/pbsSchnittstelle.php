@@ -72,7 +72,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
             //send request
             $raw = Requests::post($this->url . "/users/token", $headers, $data, ['timeout' => 50]);
         } catch (\Exception $e) {
-            $logger->log("No connection to midata";
+            #$logger->log("No connection to midata");
             throw new \Exception('Keine Verbindung zur Midata möglich... Versuche es doch in ein paar Minuten 
             nochmals oder melde dich beim Webmaster \n' . $e->getMessage());
         }
@@ -88,7 +88,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         //get token
         $authentication_token = $res['people'][0]['authentication_token'];
         if (!$authentication_token) {
-            $logger->log("No token... " . implode($res));
+            #$logger->log("No token... " . implode($res));
             throw new \Exception('Token konnte nicht geladen werden.');
         }
         //token ready, password is not needed anymore.
@@ -113,11 +113,11 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
                 }
             }
             if (!$isMember) {
-                $logger->log("Scheinbar kein Mitglied der Abteilung, welches probiert sich hier einzuloggen. ");
+                #$logger->log("Scheinbar kein Mitglied der Abteilung, welches probiert sich hier einzuloggen. ");
                 throw new \Exception('Anscheinend gehörst du nicht zur Abteilung...');
             }
         } else {
-            $logger->log("unkonwn error during login");
+            #$logger->log("unkonwn error during login");
             throw new \Exception('Strukturfehler');
         }
 
