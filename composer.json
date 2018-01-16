@@ -1,5 +1,5 @@
 {
-    "name": "PfadiZytturm/MidataBundle",
+    "name": "pfadizytturm/midatabundle",
     "description": "This is a bundle for the symfony framework and contains midata bindings and a personal mailing service",
     "keywords": ["midata", "pbs", "pfadi", "scout"],
     "license": "MIT",
