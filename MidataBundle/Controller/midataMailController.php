@@ -23,6 +23,7 @@ class midataMailController extends Controller
     private $mapping;
     private $mailer;
     private $done_view;
+    private $attachement_folder;
 
     public function __construct(ContainerInterface $container, pbsSchnittstelle $midata, TokenStorageInterface $token)
     {
@@ -34,6 +35,8 @@ class midataMailController extends Controller
         $this->mailer = $container->get($container->getParameter("midata.mail.mailer"));
         $this->mapping = $container->getParameter("midata.mail.mapping");
         $this->done_view = $container->getParameter('midata.mail.view.done');
+
+        $this->attachement_folder = $this->getParameter("anhaengeFolder");
     }
 
     /**
@@ -64,7 +67,8 @@ class midataMailController extends Controller
             // check if there is an attachment
             $anhang = null;
             if (isset($_FILES['anhang']) && $_FILES['anhang']['size'] > 0) {
-                $anhang = $this->getParameter("anhaengeFolder") . $_FILES['anhang']['name'];
+                $anhang = $this->attachement_folder . $_FILES['anhang']['name'];
+                mkdir($this->attachement_folder, , 0755, true);
                 move_uploaded_file($_FILES['anhang']["tmp_name"], $anhang);
                 if ($this->logger !== null) {
                     $this->logger->log($this->getUser()->getUsername() . " hat einen Anhang hochgeladen: " . $anhang);
