@@ -65,6 +65,11 @@ class Configuration implements ConfigurationInterface
                                 ->scalarPrototype()->end()
                             ->end()
                         ->end()
+                        ->arrayNode("tn_roles")
+                            ->arrayPrototype()
+                                ->scalarPrototype()->end()
+                            ->end()
+                        ->end()
                     ->end()
                 ->end()
             ->end();

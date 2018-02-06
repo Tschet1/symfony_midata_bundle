@@ -25,6 +25,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
     private $cache;
     private $cacheTTL;
     private $role_mapping;
+    private $tn_roles;
 
     /**
      * pbsSchnittstelle constructor.
@@ -45,6 +46,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
                 $this->role_mapping = $tmpmapping;
             }
         }
+        $this->tn_roles = $container->getParameter("midata.tnRoles");
     }
 
     /**
@@ -132,6 +134,11 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
                     foreach ($res['linked']['roles'] as $tmp) {
                         //role in ids found
                         if ($tmp['id'] == $role) {
+                            // check if the user is actually a TN
+                            if (in_array($tmp['role_type'], $this->tn_roles)){
+                                // fail, a TN tries to log in!
+                                throw new \Exception('Du scheinst ein Teilnehmer zu sein... Zugang nur für Leiter!');
+                            }
                             //iterate over mapping
                             foreach ($this->role_mapping as $role_name => $role_array) {
                                 if (in_array($tmp['role_type'], $role_array)) {

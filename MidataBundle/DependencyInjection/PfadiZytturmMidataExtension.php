@@ -44,6 +44,20 @@ class PfadiZytturmMidataExtension extends Extension
             $container->setParameter('midata.roleMapping', $config['midata']['role_mapping']);
         }
 
+        if(isset($config['midata']['tn_roles'])){
+            $container->setParameter('midata.tnRoles', $config['midata']['tn_roles']);
+        } else {
+            $container->setParameter('midata.tnRoles', [
+                "Biber",
+                "Wolf",
+                "Leitwolf",
+                "Leitpfadi",
+                "Pfadi",
+                "Pio"
+            ]);
+        }
+
+
         $container->setParameter('midata.mail.mapping', $config['mail']['key_mapping']);
         $container->setParameter('midata.mail.mailer', $config['mail']['mailer']);
 
