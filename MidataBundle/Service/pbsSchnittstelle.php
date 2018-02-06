@@ -124,9 +124,8 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         }
 
         // add roles to the user
-        $roles = Array();
+        $roles = array();
         if ($this->role_mapping !== null) {
-
             if (isset($res['people'][0]['links']['roles'])) {
                 //iterate over roles
                 foreach ($res['people'][0]['links']['roles'] as $role) {
@@ -135,7 +134,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
                         //role in ids found
                         if ($tmp['id'] == $role) {
                             // check if the user is actually a TN
-                            if (in_array($tmp['role_type'], $this->tn_roles)){
+                            if (in_array($tmp['role_type'], $this->tn_roles)) {
                                 // fail, a TN tries to log in!
                                 throw new \Exception('Du scheinst ein Teilnehmer zu sein... Zugang nur für Leiter!');
                             }
@@ -171,7 +170,6 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
             "stufe" => $stufe,
             "Pfadiname" => $pfadiname
         );
-
     }
 
     /**
@@ -211,8 +209,8 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
                 // do the actual querry at midata
                 $ret = $this->doQuery(
                     $this->url
-                    . "/" . $query . ".json");
-
+                    . "/" . $query . ".json"
+                );
             } catch (\Exception $e) {
                 throw $e;
             }
@@ -302,7 +300,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         }
 
         // make a nice list of all children
-        $list = Array(
+        $list = array(
             'name' => $groupDetails['groups'][0]['name'],
         );
         if (isset($groupDetails['groups'][0]['links']['children'])) {
@@ -457,7 +455,8 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
                                     $inklusiveAPVundERinUntergruppen,
                                     $nurVersanAdressen,
                                     false
-                                ));
+                                )
+                            );
                         }
                     }
                 }
@@ -479,14 +478,10 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
     {
         $temp_array = array();
         foreach ($array as &$v) {
-
-            if (!isset($temp_array[$v[$key]]))
-
+            if (!isset($temp_array[$v[$key]])) {
                 $temp_array[$v[$key]] =& $v;
-
+            }
         }
         $array = array_values($temp_array);
-
-
     }
 }

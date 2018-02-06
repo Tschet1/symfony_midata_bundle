@@ -134,7 +134,7 @@ class midataMailController extends Controller
         }
 
         // send
-        if ($this->container->hasParameter('midata.mail.mail_domain')){
+        if ($this->container->hasParameter('midata.mail.mail_domain')) {
             $tx = array($this->user->getPfadiname() . "@" . $this->container->getParameter('midata.mail.mail_domain') => $this->user->getPfadiname());
         } else {
             $tx = array($this->user->getUsername() => $this->user->getUsername());
@@ -164,10 +164,6 @@ class midataMailController extends Controller
                 $tx,
                 $anhang
             );
-
         }
-
-
     }
-
 }

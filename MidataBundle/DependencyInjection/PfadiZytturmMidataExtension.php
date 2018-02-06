@@ -40,11 +40,11 @@ class PfadiZytturmMidataExtension extends Extension
         if (isset($config['mail']['logger'])) {
             $container->setParameter('midata.mail.logger', $config['mail']['logger']);
         }
-        if(isset($config['midata']['role_mapping'])){
+        if (isset($config['midata']['role_mapping'])) {
             $container->setParameter('midata.roleMapping', $config['midata']['role_mapping']);
         }
 
-        if(isset($config['midata']['tn_roles']) && $config['midata']['tn_roles'] != []){
+        if (isset($config['midata']['tn_roles']) && $config['midata']['tn_roles'] != []) {
             $container->setParameter('midata.tnRoles', $config['midata']['tn_roles']);
         } else {
             $container->setParameter('midata.tnRoles', [
@@ -60,6 +60,5 @@ class PfadiZytturmMidataExtension extends Extension
 
         $container->setParameter('midata.mail.mapping', $config['mail']['key_mapping']);
         $container->setParameter('midata.mail.mailer', $config['mail']['mailer']);
-
     }
 }
