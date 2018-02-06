@@ -44,7 +44,7 @@ class PfadiZytturmMidataExtension extends Extension
             $container->setParameter('midata.roleMapping', $config['midata']['role_mapping']);
         }
 
-        if(isset($config['midata']['tn_roles'])){
+        if(isset($config['midata']['tn_roles']) && $config['midata']['tn_roles'] != []){
             $container->setParameter('midata.tnRoles', $config['midata']['tn_roles']);
         } else {
             $container->setParameter('midata.tnRoles', [
