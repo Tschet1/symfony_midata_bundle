@@ -36,7 +36,7 @@ class midataMailController extends Controller
         $this->mapping = $container->getParameter("midata.mail.mapping");
         $this->done_view = $container->getParameter('midata.mail.view.done');
 
-        $this->attachement_folder = $this->getParameter("anhaengeFolder");
+        $this->attachement_folder = $container->getParameter("midata.mail.anhaengeFolder");
     }
 
     /**
@@ -68,7 +68,9 @@ class midataMailController extends Controller
             $anhang = null;
             if (isset($_FILES['anhang']) && $_FILES['anhang']['size'] > 0) {
                 $anhang = $this->attachement_folder . $_FILES['anhang']['name'];
-                mkdir($this->attachement_folder, 0755, true);
+                if(!file_exists($this->attachement_folder)){
+                    mkdir($this->attachement_folder, 0755, true);
+                }
                 move_uploaded_file($_FILES['anhang']["tmp_name"], $anhang);
                 if ($this->logger !== null) {
                     $this->logger->log($this->getUser()->getUsername() . " hat einen Anhang hochgeladen: " . $anhang);

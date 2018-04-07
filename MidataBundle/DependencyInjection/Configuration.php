@@ -49,6 +49,7 @@ class Configuration implements ConfigurationInterface
                                 ->scalarNode('tMutter')->defaultValue('Telefon Mutter')->end()
                             ->end()
                         ->end()
+                        ->scalarNode("anhaengeFolder")->defaultValue("%kernel.root_dir%/Mails/anhaenge/")->end()
                     ->end()
                 ->end()
                 ->arrayNode("midata")

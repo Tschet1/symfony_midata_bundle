@@ -36,6 +36,7 @@ class PfadiZytturmMidataExtension extends Extension
 
         if (isset($config['mail']['mail_domain'])) {
             $container->setParameter('midata.mail.mail_domain', $config['mail']['mail_domain']);
+            $container->setParameter('midata.mail.anhaengeFolder', $config['mail']['anhaengeFolder']);
         }
         if (isset($config['mail']['logger'])) {
             $container->setParameter('midata.mail.logger', $config['mail']['logger']);
