@@ -323,7 +323,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
      *
      * Search for users.
      */
-    public function loadMembersOfGroupWithFilter($group, $filter, $inklusiveUntergruppen, $inklusiveAPVundERinUntergruppen = false, $nurVersanAdressen = false, $nurUntergruppen = false)
+    public function loadMembersOfGroupWithFilter($group, $filter, $inklusiveUntergruppen, $inklusiveAPVundERinUntergruppen = false, $nurVersanAdressen = false, $nurUntergruppen = false, $removeDuplicates = true)
     {
         // return list
         $lst = array();
@@ -462,7 +462,9 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
                 }
 
                 // remove duplicates
-                $this->removeDuplicates($lst, 'id');
+                if ($removeDuplicates) {
+                    $this->removeDuplicates($lst, 'id');
+                }
             }
             return $lst;
         } catch (\Exception $e) {
