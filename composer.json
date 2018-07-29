@@ -1,5 +1,6 @@
 {
     "name": "pfadizytturm/midatabundle",
+    "type": "symfony-bundle",
     "description": "This is a bundle for the symfony framework and contains midata bindings and a personal mailing service",
     "keywords": ["midata", "pbs", "pfadi", "scout"],
     "license": "MIT",
