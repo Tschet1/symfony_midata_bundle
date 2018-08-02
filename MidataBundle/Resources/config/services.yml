@@ -7,6 +7,8 @@ services:
 
     PfadiZytturmMidataBundle\Controller\midataMailController:
         class: PfadiZytturm\MidataBundle\Controller\midataMailController
+        autowire: true
+        autoconfigure: true
         arguments: ["@service_container", "@midata.schnittstelle", "@security.token_storage"]
 
     PfadiZytturm\MidataBundle\Service\pbsSchnittstelle: '@midata.schnittstelle'

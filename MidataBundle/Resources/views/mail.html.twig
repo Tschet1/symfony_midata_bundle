@@ -11,12 +11,6 @@
 {% endmacro %}
 
 {% block content %}
-    {% stylesheets
-    '@AppBundle/Resources/css/*'
-    filter="scssphp" output='css/compiled.css' %}
-    <link rel="stylesheet" href="{{ asset_url }}"/>
-    {% endstylesheets %}
-
     <style>
         #sendMailInfo {
             height: auto;
