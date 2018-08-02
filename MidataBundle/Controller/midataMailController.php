@@ -68,7 +68,7 @@ class midataMailController extends Controller
             $anhang = null;
             if (isset($_FILES['anhang']) && $_FILES['anhang']['size'] > 0) {
                 $anhang = $this->attachement_folder . $_FILES['anhang']['name'];
-                if(!file_exists($this->attachement_folder)){
+                if (!file_exists($this->attachement_folder)) {
                     mkdir($this->attachement_folder, 0755, true);
                 }
                 move_uploaded_file($_FILES['anhang']["tmp_name"], $anhang);
@@ -81,7 +81,7 @@ class midataMailController extends Controller
             $this->loadReceiversAndSendMail($content, $gruppe, $filter, $betreff, $untergruppen, $anhang);
 
             // return the info page
-            return $this->render($this->done_view);
+            return $this->render($this->done_view, array("mail" => true));
         }
 
         return $this->render('@PfadiZytturmMidata/mail.html.twig', array('gruppen' => $gruppen, 'platzhalter' => $this->mapping, 'user' => $this->getUser()->getPfadiname(), 'id' => $this->container->getParameter("midata.groupId")));
