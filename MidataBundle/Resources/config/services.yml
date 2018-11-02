@@ -4,6 +4,8 @@ services:
         class: PfadiZytturm\MidataBundle\Service\pbsSchnittstelle
         autowire: true
         autoconfigure: true
+        calls:
+        - [setDatacollector, ['@?midata.collector']]
 
     PfadiZytturmMidataBundle\Controller\midataMailController:
         class: PfadiZytturm\MidataBundle\Controller\midataMailController
@@ -12,6 +14,17 @@ services:
         arguments: ["@service_container", "@midata.schnittstelle", "@security.token_storage"]
 
     PfadiZytturm\MidataBundle\Service\pbsSchnittstelle: '@midata.schnittstelle'
+
+    midata.collector:
+        class: PfadiZytturm\MidataBundle\DataCollector\midataDataCollector
+        # PfadiZytturm\MidataBundle\DataCollector\midataDataCollector
+        tags:
+        - name:     data_collector
+          template: '@PfadiZytturmMidata/datacollector.html.twig'
+            # must match the value returned by the getName() method
+          id:       'midata.collector'
+            # optional priority
+            # priority: 300
 
 #    pfadi_zytturm_midata.example:
 #        class: PfadiZytturm\MidataBundle\Example

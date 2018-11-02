@@ -12,6 +12,9 @@ use PfadiZytturm\MidataBundle\PfadiZytturmMidataBundle;
 use Requests;
 use Symfony\Component\Cache\Simple\FilesystemCache;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class pbsSchnittstelle extends PfadiZytturmMidataBundle
 {
@@ -25,6 +28,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
     private $cacheTTL;
     private $role_mapping;
     private $tn_roles;
+    private $datacollector;
 
     /**
      * pbsSchnittstelle constructor.
@@ -58,6 +62,11 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         }
     }
 
+    public function setDatacollector($collector)
+    {
+        $this->datacollector = $collector;
+    }
+
     /**
      * User login to midata. This can be used to get a means of log in for your homepage by connecting to midata or
      * loading information about your users.
@@ -79,10 +88,13 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         $headers = array("Accept" => "application/json");
         $data = array("person[email]" => $mail, "person[password]" => $password);
 
-        // check first if the user has a token
+        if($this->datacollector){
+            $this->datacollector->count_request(false);
+        }
+
         try {
             //send request
-            $raw = Requests::post($this->url . "/users/sign_in", $headers, $data, ['timeout' => 50]);
+            $raw = Requests::post($this->url . "/users/token", $headers, $data, ['timeout' => 50]);
         } catch (\Exception $e) {
             #$logger->log("No connection to midata");
             throw new \Exception('Keine Verbindung zur Midata möglich... Versuche es doch in ein paar Minuten 
@@ -92,30 +104,19 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         // we received an answer, check if the request was successful
         $res = json_decode($raw->body, true);
         if (isset($res['error'])) {
-            try {
-                //send request
-                $raw = Requests::post($this->url . "/users/token", $headers, $data, ['timeout' => 50]);
-            } catch (\Exception $e) {
-                #$logger->log("No connection to midata");
-                throw new \Exception('Keine Verbindung zur Midata möglich... Versuche es doch in ein paar Minuten 
-            nochmals oder melde dich beim Webmaster \n' . $e->getMessage());
-            }
-
-            // we received an answer, check if the request was successful
-            $res = json_decode($raw->body, true);
-            if (isset($res['error'])) {
-                throw new \Exception('User oder Password falsch.');
-            }
+            throw new \Exception('User oder Password falsch.');
         }
+
 
         /*
          * II: Load information about the user
          */
-        return $this->loadUserData($res["id"], $res['links']['primary_group']);
+        return $this->loadUserData($res["people"][0]["id"], $res["people"][0]['links']['primary_group']);
     }
 
-    public function loadUserData($id, $group){
-        $res = $this->queryWrap('groups/' . $group . '/people/' . $id);
+    public function loadUserData($id, $gid)
+    {
+        $res = $this->queryWrap('groups/' . $gid . '/people/' . $id);
 
         // Nicht-Pfadi-Zytturm Mitglieder herausfiltern
         $isMember = false;
@@ -179,7 +180,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
 
         return array(
             "id" => $id,
-            "group" => $group,
+            "group" => $gid,
             "roles" => $roles,
             "stufe" => $stufe,
             "Pfadiname" => $pfadiname
@@ -218,8 +219,14 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         $cacheKey = "pbsschnittstelle" . str_replace("/", "", $query);
         if ($this->cache->has($cacheKey)) {
             // found in cache, serve from cache
+            if($this->datacollector){
+                $this->datacollector->count_request(true);
+            }
             return $this->cache->get($cacheKey);
         } else {
+            if($this->datacollector){
+                $this->datacollector->count_request(false);
+            }
             try {
                 // do the actual querry at midata
                 $ret = $this->doQuery(
@@ -240,7 +247,8 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
      * Load access token from midata. The tokens do not expire but we set an artifical ttl of 1 week.
      * @throws \Exception: Throw exception if no token could be load from midata
      */
-    public function loadToken(){
+    public function loadToken()
+    {
         $headers = array("Accept" => "application/json");
 
         $data = array(
@@ -264,7 +272,6 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
 
         // we got authentication token, store and proceed
         $this->token = $res['people'][0]['authentication_token'];
-        $tokenExpire = date_create()->add(new \DateInterval('P1W'));
         if (!$this->token) {
             throw new \Exception('Token konnte nicht geladen werden.');
         }
@@ -273,7 +280,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         $cacheKey = "pbsschnittstelle_token";
 
         // set timeout for new cache value
-        $this->cache->set($cacheKey, $this->token, $tokenExpire);
+        $this->cache->set($cacheKey, $this->token, new \DateInterval('P1W'));
     }
 
     /**
