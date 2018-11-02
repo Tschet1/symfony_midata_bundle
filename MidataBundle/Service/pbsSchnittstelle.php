@@ -88,7 +88,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         $headers = array("Accept" => "application/json");
         $data = array("person[email]" => $mail, "person[password]" => $password);
 
-        if($this->datacollector){
+        if ($this->datacollector) {
             $this->datacollector->count_request(false);
         }
 
@@ -98,7 +98,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         } catch (\Exception $e) {
             #$logger->log("No connection to midata");
             throw new \Exception('Keine Verbindung zur Midata möglich... Versuche es doch in ein paar Minuten 
-            nochmals oder melde dich beim Webmaster \n' . $e->getMessage());
+                nochmals oder melde dich beim Webmaster \n' . $e->getMessage());
         }
 
         // we received an answer, check if the request was successful
@@ -219,12 +219,12 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         $cacheKey = "pbsschnittstelle" . str_replace("/", "", $query);
         if ($this->cache->has($cacheKey)) {
             // found in cache, serve from cache
-            if($this->datacollector){
+            if ($this->datacollector) {
                 $this->datacollector->count_request(true);
             }
             return $this->cache->get($cacheKey);
         } else {
-            if($this->datacollector){
+            if ($this->datacollector) {
                 $this->datacollector->count_request(false);
             }
             try {
@@ -308,7 +308,12 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         // perform the actual query
         $raw = Requests::get($query, $headers);
         if (!$raw->success) {
-            throw new \Exception('Fehler bei Kommunikation mit Midata (query)');
+            $this->loadToken();
+            $headers["X-User-Token"] = $this->token;
+            $raw = Requests::get($query, $headers);
+            if (!$raw->success) {
+                throw new \Exception('Fehler bei Kommunikation mit Midata (query)');
+            }
         }
 
         // return answer as array
