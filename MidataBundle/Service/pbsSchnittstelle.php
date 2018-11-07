@@ -192,18 +192,18 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
      * @param $group integer Group id as given in midata.
      * @return mixed|null people that are part of the given group. Null if there is an error.
      */
-    public function requestGroupMembers($group)
+    public function requestGroupMembers($group, $use_cache=true)
     {
-        return $this->queryWrap('groups/' . $group . '/people');
+        return $this->queryWrap('groups/' . $group . '/people', $use_cache);
     }
 
     /**
      * @param $group integer Group id as given in midata.
      * @return mixed|null The information about the group.
      */
-    public function requestGroup($group)
+    public function requestGroup($group, $use_cache=true)
     {
-        return $this->queryWrap('groups/' . $group);
+        return $this->queryWrap('groups/' . $group, $use_cache);
     }
 
     /**
@@ -213,11 +213,11 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
      * @return mixed|null Result of query.
      * @throws \Exception throws an exception if an error occurs.
      */
-    public function queryWrap($query)
+    public function queryWrap($query, $use_cache=true)
     {
         // Check if query is cached
         $cacheKey = "pbsschnittstelle" . str_replace("/", "", $query);
-        if ($this->cache->has($cacheKey)) {
+        if ($this->cache->has($cacheKey) && $use_cache) {
             // found in cache, serve from cache
             if ($this->datacollector) {
                 $this->datacollector->count_request(true);
@@ -362,17 +362,18 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
      * @param bool $inklusiveAPVundERinUntergruppen should the APV and ER groups be included
      * @param bool $nurVersanAdressen should the non delivery mail addresses be filtered out?
      * @param bool $nurUntergruppen skip the group itself and continue with the children of the group
+     * @param bool $use_cache allow handling of requests from cache
      * @return array result of person queries of matching persons
      *
      * Search for users.
      */
-    public function loadMembersOfGroupWithFilter($group, $filter, $inklusiveUntergruppen, $inklusiveAPVundERinUntergruppen = false, $nurVersanAdressen = false, $nurUntergruppen = false, $removeDuplicates = true)
+    public function loadMembersOfGroupWithFilter($group, $filter, $inklusiveUntergruppen, $inklusiveAPVundERinUntergruppen = false, $nurVersanAdressen = false, $nurUntergruppen = false, $removeDuplicates = true, $use_cache = true)
     {
         // return list
         $lst = array();
 
         // get the list of members of the current group
-        $memberlist = $this->requestGroupMembers($group, $filter);
+        $memberlist = $this->requestGroupMembers($group, $use_cache);
 
 
         $mailadressen = array();
@@ -483,7 +484,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
 
             // search child groups (recurse)
             if ($inklusiveUntergruppen) {
-                $groupDetails = $this->requestGroup($group);
+                $groupDetails = $this->requestGroup($group, $use_cache);
                 if (isset($groupDetails['groups']) && isset($groupDetails['groups'][0]['links']) &&
                     isset($groupDetails['groups'][0]['links']['children'])) {
                     foreach ($groupDetails['groups'][0]['links']['children'] as $subgroup) {
@@ -497,7 +498,9 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
                                     $inklusiveUntergruppen,
                                     $inklusiveAPVundERinUntergruppen,
                                     $nurVersanAdressen,
-                                    false
+                                    false,
+                                    $removeDuplicates,
+                                    $use_cache
                                 )
                             );
                         }
