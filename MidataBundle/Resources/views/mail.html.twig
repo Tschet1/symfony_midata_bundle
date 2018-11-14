@@ -320,8 +320,14 @@
                     this.text('(-Platzhalter-)')
                 },
                 values: [
-                    {% for feld in platzhalter %}
-                    {text: '{{ feld }}', value: '{{ feld }}'}{% if not loop.last %},{% endif %}
+                    {% for key,feld in platzhalter %}
+                        {% if feld is iterable %}
+                            {% for feld_inner in feld %}
+                                {text: '{{ key }}.{{ feld_inner }}', value: '{{ key }}.{{ feld_inner }}'}{% if not loop.last %},{% endif %}
+                            {% endfor %}
+                        {% else %}
+                            {text: '{{ feld }}', value: '{{ feld }}'}{% if not loop.last %},{% endif %}
+                        {% endif %}
                     {% endfor %}
                 ]
             });

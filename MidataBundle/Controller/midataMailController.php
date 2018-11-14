@@ -158,7 +158,7 @@ class midataMailController extends Controller
                             } else {
                                 $repl = "";
                             }
-                            $modifiedContent = preg_replace("/\(\-" . $pl . "\-\)/", $repl, $modifiedContent);
+                            $modifiedContent = preg_replace("/\(\-" . $key . "." . "$pl2" . "\-\)/", $repl, $modifiedContent);
                         }
                 } else {
                     if (isset($person[$key])) {
