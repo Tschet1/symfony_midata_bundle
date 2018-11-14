@@ -147,8 +147,31 @@ class midataMailController extends Controller
             // do the text replacements
             $modifiedContent = $content;
             foreach ($this->mapping as $key => $pl) {
-                $repl = isset($person[$key]) ? $person[$key] : "";
-                $modifiedContent = preg_replace("/\(\-" . $pl . "\-\)/", $repl, $modifiedContent);
+                    if(is_array($pl)){
+                        foreach ($pl as $key2 => $pl2) {
+                            if (isset($person[$key]) && isset($person[$key][$key2])) {
+                                if (is_array($person[$key][$key2])) {
+                                    $repl = implode(", ", $person[$key][$key2]);
+                                } else {
+                                    $repl = $person[$key][$key2];
+                                }
+                            } else {
+                                $repl = "";
+                            }
+                            $modifiedContent = preg_replace("/\(\-" . $pl . "\-\)/", $repl, $modifiedContent);
+                        }
+                } else {
+                    if (isset($person[$key])) {
+                        if (is_array($person[$key])) {
+                            $repl = implode(", ", $person[$key]);
+                        } else {
+                            $repl = $person[$key];
+                        }
+                    } else {
+                        $repl = "";
+                    }
+                    $modifiedContent = preg_replace("/\(\-" . $pl . "\-\)/", $repl, $modifiedContent);
+                }
             }
             $modifiedContent = preg_replace('/<br(\s+)?\/?>/i', "\n", $modifiedContent);
             $modifiedContent = preg_replace('/<\/p>/i', "\n", $modifiedContent);
