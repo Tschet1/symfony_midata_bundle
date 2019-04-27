@@ -192,7 +192,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
      * @param $group integer Group id as given in midata.
      * @return mixed|null people that are part of the given group. Null if there is an error.
      */
-    public function requestGroupMembers($group, $use_cache=true)
+    public function requestGroupMembers($group, $use_cache = true)
     {
         return $this->queryWrap('groups/' . $group . '/people', $use_cache);
     }
@@ -201,7 +201,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
      * @param $group integer Group id as given in midata.
      * @return mixed|null The information about the group.
      */
-    public function requestGroup($group, $use_cache=true)
+    public function requestGroup($group, $use_cache = true)
     {
         return $this->queryWrap('groups/' . $group, $use_cache);
     }
@@ -213,10 +213,12 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
      * @return mixed|null Result of query.
      * @throws \Exception throws an exception if an error occurs.
      */
-    public function queryWrap($query, $use_cache=true)
+    public function queryWrap($query, $use_cache = true, $cacheKey = '')
     {
         // Check if query is cached
-        $cacheKey = "pbsschnittstelle" . str_replace("/", "", $query);
+        if($cacheKey === '') {
+            $cacheKey = "pbsschnittstelle" . str_replace(["/", ":"], ['', ''], $query);
+        }
         if ($this->cache->has($cacheKey) && $use_cache) {
             // found in cache, serve from cache
             if ($this->datacollector) {
@@ -229,10 +231,14 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
             }
             try {
                 // do the actual querry at midata
-                $ret = $this->doQuery(
-                    $this->url
-                    . "/" . $query . ".json"
-                );
+                if (substr($query, 0, 4) === "http") {
+                    $ret = $this->doQuery($query);
+                } else {
+                    $ret = $this->doQuery(
+                        $this->url
+                        . "/" . $query . ".json"
+                    );
+                }
             } catch (\Exception $e) {
                 throw $e;
             }
