@@ -10,11 +10,12 @@ namespace PfadiZytturm\MidataBundle\Service;
 
 use PfadiZytturm\MidataBundle\PfadiZytturmMidataBundle;
 use Requests;
-use Symfony\Component\Cache\Simple\FilesystemCache;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\Cache\ItemInterface;
 
 class pbsSchnittstelle extends PfadiZytturmMidataBundle
 {
@@ -37,7 +38,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
     public function __construct(ContainerInterface $container)
     {
         // TODO: enable different forms of caches or allow to disable caches
-        $this->cache = new FilesystemCache();
+        $this->cache = new FilesystemAdapter();
         $this->url = $container->getParameter("midata.url");
         $this->groupId = $container->getParameter("midata.groupId");
         $this->cacheTTL = $container->getParameter("midata.cache.TTL");
@@ -211,16 +212,13 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         } else {
             $cacheKey = "pbsschnittstelle" . str_replace(["/", ":"], ['', ''], $cacheKey);
         }
-        if ($this->cache->has($cacheKey) && $use_cache) {
-            // found in cache, serve from cache
-            if ($this->datacollector) {
-                $this->datacollector->count_request(true);
-            }
-            return $this->cache->get($cacheKey);
-        } else {
-            if ($this->datacollector) {
-                $this->datacollector->count_request(false);
-            }
+
+        $count_request = true;
+        $value = $this->cache->get($cacheKey, function (ItemInterface $item) use (&$count_request, $query) {
+            $count_request = false;
+            // set timeout for new cache value
+            $item->expiresAfter($this->cacheTTL);
+
             try {
                 // do the actual querry at midata
                 if (substr($query, 0, 4) === "http") {
@@ -235,10 +233,16 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
                 throw $e;
             }
 
-            // set timeout for new cache value
-            $this->cache->set($cacheKey, $ret, $this->cacheTTL);
             return $ret;
+        });
+        if ($this->datacollector) {
+            $this->datacollector->count_request($count_request);
         }
+        if (!$use_cache) {
+            $this->cache->delete($cacheKey);
+        }
+
+        return $value;
     }
 
     /**
