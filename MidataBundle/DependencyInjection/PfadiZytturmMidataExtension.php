@@ -28,8 +28,7 @@ class PfadiZytturmMidataExtension extends Extension
 
         // set config
         $container->setParameter('midata.url', $config['midata']['url']);
-        $container->setParameter('midata.user', $config['midata']['user']);
-        $container->setParameter('midata.password', $config['midata']['password']);
+        $container->setParameter('midata.token', $config['midata']['token']);
         $container->setParameter('midata.groupId', $config['midata']['groupId']);
         $container->setParameter('midata.cache.TTL', $config['midata']['cache']['ttl']);
         $container->setParameter('midata.mail.view.done', $config['mail']['done_view']);
