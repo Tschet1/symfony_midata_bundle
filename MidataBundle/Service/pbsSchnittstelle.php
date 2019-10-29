@@ -40,6 +40,8 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         // TODO: enable different forms of caches or allow to disable caches
         $this->cache = new FilesystemAdapter();
         $this->url = $container->getParameter("midata.url");
+        $this->user = $container->getParameter("midata.user");
+        $this->password = $container->getParameter("midata.password");
         $this->groupId = $container->getParameter("midata.groupId");
         $this->cacheTTL = $container->getParameter("midata.cache.TTL");
         if ($container->hasParameter('midata.roleMapping')) {
@@ -50,7 +52,18 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         }
         $this->tn_roles = $container->getParameter("midata.tnRoles");
 
+        // load token
         $this->token = $container->getParameter("midata.token");
+
+        if ($this->token == '') {
+            $cacheKey = "pbsschnittstelle_token";
+            $this->token = $this->cache->get($cacheKey, function (ItemInterface $item) {
+                // set timeout for new cache value
+                $item->expiresAfter(100*$this->cacheTTL);
+                $this->loadToken();
+                return $this->token;
+            });
+        }
     }
 
     public function setDatacollector($collector)
@@ -246,6 +259,40 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
     }
 
     /**
+     * Load access token from midata. The tokens do not expire but we set an artifical ttl of 1 week.
+     * @throws \Exception: Throw exception if no token could be load from midata
+     */
+    public function loadToken()
+    {
+        $headers = array("Accept" => "application/json");
+
+        $data = array(
+            "person[email]" => $this->user,
+            "person[password]" => $this->password
+        );
+
+        try {
+            //send request
+            $raw = Requests::post(
+                $this->url . "/users/token",
+                $headers,
+                $data
+            );
+        } catch (\Exception $e) {
+            throw new \Exception('Keine Verbindung zur Midata möglich oder sonstiger Fehler beim Request.');
+        }
+
+        //got anser, decode it
+        $res = json_decode($raw->body, true);
+
+        // we got authentication token, store and proceed
+        $this->token = $res['people'][0]['authentication_token'];
+        if (!$this->token) {
+            throw new \Exception('Token konnte nicht geladen werden.');
+        }
+    }
+
+    /**
      * @param $query string query to be executed
      * @return mixed return value
      * @throws \Exception
@@ -260,11 +307,16 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         if (!$this->token) {
             // no token or token expired, authenticate
             // assemble the headers (user, pw)
-            throw Exception("missing token");
+            $this->loadToken();
         }
 
         // set the headers
-        $headers["X-Token"] = $this->token;
+        if ($this->user != '') {
+            $headers["X-User-Email"] = $this->user;
+            $headers["X-User-Token"] = $this->token;
+        } else {
+            $headers["X-Token"] = $this->token;
+        }
 
         // perform the actual query
         $raw = Requests::get($query, $headers);
