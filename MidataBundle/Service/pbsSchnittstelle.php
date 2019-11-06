@@ -56,14 +56,19 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         $this->token = $container->getParameter("midata.token");
 
         if ($this->token == '') {
-            $cacheKey = "pbsschnittstelle_token";
-            $this->token = $this->cache->get($cacheKey, function (ItemInterface $item) {
-                // set timeout for new cache value
-                $item->expiresAfter(100*$this->cacheTTL);
-                $this->loadToken();
-                return $this->token;
-            });
+            $this->cacheToken();
         }
+    }
+
+    private function cacheToken()
+    {
+        $cacheKey = "pbsschnittstelle_token";
+        $this->token = $this->cache->get($cacheKey, function (ItemInterface $item) {
+            // set timeout for new cache value
+            $item->expiresAfter(100*$this->cacheTTL);
+            $this->loadToken();
+            return $this->token;
+        });
     }
 
     public function setDatacollector($collector)
@@ -317,11 +322,16 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         } else {
             $headers["X-Token"] = $this->token;
         }
-
         // perform the actual query
         $raw = Requests::get($query, $headers);
         if (!$raw->success) {
-            throw new \Exception('Fehler bei Kommunikation mit Midata (query)');
+            $this->cache->delete('pbsschnittstelle_token');
+            $this->cacheToken();
+            $raw = Requests::get($query, $headers);
+            if (!$raw->success) {
+                $this->cache->delete('pbsschnittstelle_token');
+                throw new \Exception('Fehler bei Kommunikation mit Midata (query)');
+            }
         }
 
         // return answer as array
