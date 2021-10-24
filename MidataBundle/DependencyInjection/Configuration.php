@@ -17,8 +17,8 @@ class Configuration implements ConfigurationInterface
      */
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('pfadi_zytturm_midata');
+        $treeBuilder = new TreeBuilder('pfadi_zytturm_midata');
+        $rootNode = $treeBuilder->getRootNode();
 
         // Here you should define the parameters that are allowed to
         // configure your bundle. See the documentation linked above for
@@ -55,7 +55,7 @@ class Configuration implements ConfigurationInterface
                                 ->end()
                             ->end()
                         ->end()
-                        ->scalarNode("anhaengeFolder")->defaultValue("%kernel.root_dir%/Mails/anhaenge/")->end()
+                        ->scalarNode("anhaengeFolder")->defaultValue("%kernel.project_dir%/Mails/anhaenge/")->end()
                     ->end()
                 ->end()
                 ->arrayNode("midata")
