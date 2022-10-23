@@ -81,7 +81,7 @@ pfadi_zytturm_midata:
         key_mapping: # you can overwrite the default set of mappings from the midata keys to the keys displayed for the
                      # mail replacement
     midata:
-        user: # (required) user for the loggin to midata
+        user: # (required) user for the login to midata
         password: # (required) password for the login to midata
         groupId: # (required) set the main group id.
         role_mapping: # change this to overwrite the default midata group to symfony role mapping when you use the login 

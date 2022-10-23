@@ -11,11 +11,11 @@ namespace PfadiZytturm\MidataBundle\Service;
 use PfadiZytturm\MidataBundle\PfadiZytturmMidataBundle;
 use Requests;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 
 class pbsSchnittstelle extends PfadiZytturmMidataBundle
 {
@@ -33,27 +33,27 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
 
     /**
      * pbsSchnittstelle constructor.
-     * @param ContainerInterface $container container containing the config
+     * @param ContainerBagInterface $params params containing the config
      */
-    public function __construct(ContainerInterface $container)
+    public function __construct(ContainerBagInterface $params)
     {
         // TODO: enable different forms of caches or allow to disable caches
         $this->cache = new FilesystemAdapter();
-        $this->url = $container->getParameter("midata.url");
-        $this->user = $container->getParameter("midata.user");
-        $this->password = $container->getParameter("midata.password");
-        $this->groupId = $container->getParameter("midata.groupId");
-        $this->cacheTTL = $container->getParameter("midata.cache.TTL");
-        if ($container->hasParameter('midata.roleMapping')) {
-            $tmpmapping = $container->getParameter('midata.roleMapping');
+        $this->url = $params->get("midata.url");
+        $this->user = $params->get("midata.user");
+        $this->password = $params->get("midata.password");
+        $this->groupId = $params->get("midata.groupId");
+        $this->cacheTTL = $params->get("midata.cache.TTL");
+        if ($params->has('midata.roleMapping')) {
+            $tmpmapping = $params->get('midata.roleMapping');
             if (count($tmpmapping) > 0) {
                 $this->role_mapping = $tmpmapping;
             }
         }
-        $this->tn_roles = $container->getParameter("midata.tnRoles");
+        $this->tn_roles = $params->get("midata.tnRoles");
 
         // load token
-        $this->token = $container->getParameter("midata.token");
+        $this->token = $params->get("midata.token");
 
         if ($this->token == '') {
             $this->cacheToken();
