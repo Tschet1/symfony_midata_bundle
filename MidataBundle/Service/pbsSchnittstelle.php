@@ -222,8 +222,13 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
      * @return mixed|null Result of query.
      * @throws \Exception throws an exception if an error occurs.
      */
-    public function queryWrap($query, $use_cache = true, $cacheKey = '')
+    public function queryWrap($query, $use_cache = true, $cacheKey = '', $ttl = null)
     {
+        if($ttl === null)
+        {
+            $ttl = $this->cacheTTL;
+        }
+
         // Check if query is cached
         if ($cacheKey === '') {
             $cacheKey = "pbsschnittstelle" . str_replace(["/", ":"], ['', ''], $query);
@@ -232,10 +237,10 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
         }
 
         $count_request = true;
-        $value = $this->cache->get($cacheKey, function (ItemInterface $item) use (&$count_request, $query) {
+        $value = $this->cache->get($cacheKey, function (ItemInterface $item) use (&$count_request, $query, $ttl) {
             $count_request = false;
             // set timeout for new cache value
-            $item->expiresAfter($this->cacheTTL);
+            $item->expiresAfter($ttl);
 
             try {
                 // do the actual querry at midata
@@ -371,6 +376,32 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
             }
         }
         return $list;
+    }
+
+    public function load_image($person)
+    {
+        $url = $person["picture"];
+
+        $query = parse_url($url, PHP_URL_QUERY);
+        if($query !== "")
+        {
+            $arr = [];
+            parse_str($query, $arr);
+            if(isset($arr["X-Amz-Date"]) && isset($arr["X-Amz-Expires"]))
+            {
+                $date = strtotime($arr["X-Amz-Date"]);
+                $now = strtotime("now");
+
+                $ttl = $arr["X-Amz-Expires"];
+
+                if($now > $date + $ttl)
+                {
+                    $person = $this->queryWrap($person["href"], use_cache: true, cacheKey: str($person["id"]) . "_bild", ttl: $ttl);
+                }
+            }
+        }
+
+        return $person["picture"];
     }
 
     /**
