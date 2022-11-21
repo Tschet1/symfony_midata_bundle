@@ -392,7 +392,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
                 $date = strtotime($arr["X-Amz-Date"]);
                 $now = strtotime("now");
 
-                $ttl = $arr["X-Amz-Expires"];
+                $ttl = (int)$arr["X-Amz-Expires"];
 
                 if($now > $date + $ttl)
                 {
