@@ -396,7 +396,7 @@ class pbsSchnittstelle extends PfadiZytturmMidataBundle
 
                 if($now > $date + $ttl)
                 {
-                    $person = $this->queryWrap($person["href"], use_cache: true, cacheKey: str($person["id"]) . "_bild", ttl: $ttl);
+                    $person = $this->queryWrap($person["href"], use_cache: true, cacheKey: strval($person["id"]) . "_bild", ttl: $ttl);
                 }
             }
         }
